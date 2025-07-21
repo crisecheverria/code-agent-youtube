@@ -42,12 +42,12 @@ app.post("/message", async (c) => {
   try {
     const { content } = await c.req.json();
     const message = await currentSession.sendMessage(content);
-    return c.json({ success: true, message });
+    return c.json({ success: true, messages: [message] });
   } catch (error) {
     return c.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Unkwon error",
+        error: error instanceof Error ? error.message : "Unknown error",
       },
       500,
     );
@@ -60,8 +60,14 @@ app.get("/stream", async (c) => {
     return c.json({ success: false, error: "No active session" }, 400);
   }
 
+  const url = new URL(c.req.url);
+  const content = url.searchParams.get('content');
+  
+  if (!content) {
+    return c.json({ success: false, error: "Content parameter is required" }, 400);
+  }
+
   try {
-    const { content } = await c.req.json();
 
     // Set up SSE headers
     c.header("Content-Type", "text/event-stream");

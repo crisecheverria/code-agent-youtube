@@ -91,7 +91,7 @@ export class GroqClient {
     const maxRetries = 3;
     let lastError: Error | null = null;
 
-    for (let attempt = 1; attempt < maxRetries; attempt++) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         const response = await fetch(
           `${this.config.baseURL}/v1/chat/completions`,
@@ -134,8 +134,8 @@ export class GroqClient {
         return {
           content: choice?.message?.content || "",
           tokens: {
-            input: data.usage?.input_tokens || 0,
-            output: data.usage?.output_tokens || 0,
+            input: data.usage?.prompt_tokens || 0,
+            output: data.usage?.completion_tokens || 0,
           },
           toolCalls: choice?.message?.tool_calls || [],
         };

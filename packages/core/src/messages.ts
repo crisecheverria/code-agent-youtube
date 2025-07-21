@@ -22,7 +22,7 @@ export const Message = z.object({
   content: z.string(),
   toolCalls: z.array(ToolCall).optional(),
   toolResults: z.array(ToolResult).optional(),
-  timestamp: z.number(),
+  timestamp: z.string(),
   tokens: z
     .object({
       input: z.number().optional(),
@@ -39,8 +39,8 @@ export const Conversation = z.object({
     input: z.number(),
     output: z.number(),
   }),
-  createdAt: z.number(),
-  updatedAt: z.number(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
 });
 export type Conversation = z.infer<typeof Conversation>;
 
@@ -53,7 +53,7 @@ export function createMessage(
     id: crypto.randomUUID(),
     role,
     content,
-    timestamp: Date.now(),
+    timestamp: new Date().toISOString(),
     ...options,
   };
 }
@@ -63,8 +63,8 @@ export function createConversation(): Conversation {
     id: crypto.randomUUID(),
     messages: [],
     totalTokens: { input: 0, output: 0 },
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 }
 

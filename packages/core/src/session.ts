@@ -147,10 +147,10 @@ export class Session {
 
       // Update conversation total tokens
       this.conversation.totalTokens.input +=
-        response.tokens.input + finalResponse.tokens.input;
+        (response.tokens?.input || 0) + (finalResponse.tokens?.input || 0);
       this.conversation.totalTokens.output +=
-        response.tokens.output + finalResponse.tokens.output;
-      this.conversation.updatedAt = Date.now();
+        (response.tokens?.output || 0) + (finalResponse.tokens?.output || 0);
+      this.conversation.updatedAt = new Date().toISOString();
 
       return finalMessage;
     } else {
@@ -162,9 +162,9 @@ export class Session {
       this.conversation.messages.push(assistantMessage);
 
       // Update conversation token counts
-      this.conversation.totalTokens.input += response.tokens.input;
-      this.conversation.totalTokens.output += response.tokens.output;
-      this.conversation.updatedAt = Date.now();
+      this.conversation.totalTokens.input += response.tokens?.input || 0;
+      this.conversation.totalTokens.output += response.tokens?.output || 0;
+      this.conversation.updatedAt = new Date().toISOString();
 
       return assistantMessage;
     }
@@ -190,7 +190,10 @@ export class Session {
     // Create assistant message
     const assistantMessage = createMessage("assistant", assistantContent);
     this.conversation.messages.push(assistantMessage);
-    this.conversation.updatedAt = Date.now();
+    
+    // Note: Streaming doesn't provide accurate token counts
+    // Token counting is only available for non-streaming completion calls
+    this.conversation.updatedAt = new Date().toISOString();
 
     return assistantMessage;
   }
@@ -214,7 +217,7 @@ export class Session {
     );
 
     this.conversation.messages.push(toolMessage);
-    this.conversation.updatedAt = Date.now();
+    this.conversation.updatedAt = new Date().toISOString();
 
     return execution;
   }
