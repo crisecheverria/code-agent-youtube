@@ -13,7 +13,7 @@ export type ToolCall = z.infer<typeof ToolCall>;
 export const ToolResult = z.object({
   id: z.string(),
   result: z.any(),
-  eror: z.string().optional(),
+  error: z.string().optional(),
 });
 export type ToolResult = z.infer<typeof ToolResult>;
 export const Message = z.object({
