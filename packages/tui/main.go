@@ -8,6 +8,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -215,6 +218,82 @@ func getEnv(key, defaultValue string) string {
 }
 
 func main() {
+	// Check if running as server
+	if len(os.Args) > 1 && os.Args[1] == "server" {
+		startServer()
+		return
+	}
+
+	// Check for help flag
+	if len(os.Args) > 1 && (os.Args[1] == "--help" || os.Args[1] == "-h") {
+		printUsage()
+		return
+	}
+
+	// Default: run as TUI client
+	runTUI()
+}
+
+func printUsage() {
+	fmt.Println("Code Agent - AI-powered coding assistant")
+	fmt.Println()
+	fmt.Println("Usage:")
+	fmt.Println("  code-agent          Start the TUI client (default)")
+	fmt.Println("  code-agent server   Start the backend server")
+	fmt.Println("  code-agent --help   Show this help message")
+	fmt.Println()
+	fmt.Println("Environment Variables:")
+	fmt.Println("  GROQ_API_KEY        Your Groq API key (required)")
+	fmt.Println("  MODEL               AI model to use (default: llama-3.3-70b-versatile)")
+	fmt.Println("  SERVER_URL          Server URL (default: http://localhost:3000)")
+	fmt.Println()
+}
+
+func startServer() {
+	fmt.Println("🚀 Starting Code Agent server...")
+
+	// Get the directory where the binary is located
+	execPath, err := os.Executable()
+	if err != nil {
+		log.Fatalf("❌ Failed to get executable path: %v", err)
+	}
+
+	// Determine the server bundle path
+	baseDir := filepath.Dir(execPath)
+	var serverPath string
+
+	// Look for the server bundle in common locations
+	possiblePaths := []string{
+		filepath.Join(baseDir, "packages", "core", "dist", "index.js"),
+		filepath.Join(baseDir, "..", "packages", "core", "dist", "index.js"),
+		filepath.Join(baseDir, "dist", "index.js"),
+	}
+
+	for _, path := range possiblePaths {
+		if _, err := os.Stat(path); err == nil {
+			serverPath = path
+			break
+		}
+	}
+
+	if serverPath == "" {
+		log.Fatalf("❌ Server bundle not found. Please run 'bun run build' first.")
+	}
+
+	fmt.Printf("📦 Server bundle: %s\n", serverPath)
+
+	// Start the Bun server
+	cmd := exec.Command("bun", "run", serverPath)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Env = os.Environ()
+
+	if err := cmd.Run(); err != nil {
+		log.Fatalf("❌ Failed to start server: %v", err)
+	}
+}
+
+func runTUI() {
 	// Load configuration from environment variables
 	config := Config{
 		ServerURL: getEnv("SERVER_URL", "http://localhost:3000"),
@@ -224,13 +303,30 @@ func main() {
 
 	// Validate configuration
 	if config.Token == "" {
-		fmt.Println("GROQ_API_KEY environment variable is required")
+		fmt.Println("❌ GROQ_API_KEY environment variable is required")
 		fmt.Println("Please set it before running the application.")
+		fmt.Println()
+		fmt.Println("Example:")
+		if runtime.GOOS == "windows" {
+			fmt.Println("  set GROQ_API_KEY=your_api_key_here")
+		} else {
+			fmt.Println("  export GROQ_API_KEY=your_api_key_here")
+		}
+		fmt.Println()
+		fmt.Println("Get your API key from: https://console.groq.com/keys")
 		os.Exit(1)
 	}
 
 	// Create client
 	client := NewClient(config)
+
+	// Check if server is running, if not suggest starting it
+	if !isServerRunning(config.ServerURL) {
+		fmt.Println("⚠️  Server is not running at", config.ServerURL)
+		fmt.Println("💡 Start the server with: code-agent server")
+		fmt.Println()
+		os.Exit(1)
+	}
 
 	// Initialize session
 	fmt.Println("🚀 Initializing AI session...")
@@ -283,6 +379,16 @@ func main() {
 			handleMessage(client, input)
 		}
 	}
+}
+
+func isServerRunning(serverURL string) bool {
+	client := &http.Client{Timeout: 2 * time.Second}
+	resp, err := client.Get(serverURL + "/health")
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+	return resp.StatusCode == 200
 }
 
 // Handle regular chat message

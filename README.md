@@ -1,143 +1,163 @@
-# Agente de Código AI - Tutorial
+# Code Agent
 
-Un tutorial básico para crear un agente de código con inteligencia artificial que puede ejecutar comandos y manipular archivos.
+An AI-powered coding assistant with a client-server architecture built using TypeScript (Bun) for the server and Go for the TUI client.
 
-## Descripción
+## Features
 
-Este proyecto es un agente de código AI que proporciona una interfaz web y de línea de comandos para interactuar con un asistente de IA que puede ejecutar herramientas del sistema. El agente está construido con una arquitectura modular que incluye:
+- 🤖 AI-powered coding assistance using Groq API
+- 🔧 Built-in tools for file operations and shell commands
+- 💬 Interactive TUI with conversation history
+- 📊 Token usage tracking
+- 🚀 Cross-platform support (Linux, macOS, Windows)
+- 📦 Multiple installation methods (shell script, npm, direct download)
 
-- **Core**: Servidor web HTTP construido con Hono que maneja sesiones de conversación
-- **TUI**: Interfaz de usuario de terminal escrita en Go para interacción por línea de comandos
+## Quick Start
 
-## Características
+### Option 1: Install Script (Recommended)
 
-- 🤖 **Asistente de IA**: Integración con Groq para capacidades de lenguaje natural
-- 🔧 **Ejecución de Herramientas**: Ejecuta comandos bash, lee/escribe archivos, y maneja directorios
-- 💬 **API de Conversación**: API RESTful completa para gestionar conversaciones
-- 📡 **Streaming**: Soporte para respuestas en tiempo real mediante Server-Sent Events
-- 🖥️ **TUI**: Interfaz de terminal interactiva para uso desde línea de comandos
-- 📊 **Seguimiento de Tokens**: Monitoreo del uso de tokens para control de costos
-
-## Estructura del Proyecto
-
-```
-code-agent/
-├── packages/
-│   ├── core/           # Servidor web principal (TypeScript/Bun)
-│   │   ├── src/
-│   │   │   ├── index.ts      # Servidor HTTP con endpoints
-│   │   │   ├── session.ts    # Gestión de sesiones de conversación
-│   │   │   ├── messages.ts   # Tipos y funciones de mensajes
-│   │   │   ├── tools.ts      # Herramientas del sistema (bash, archivos)
-│   │   │   └── groq.ts       # Cliente para API de Groq
-│   │   └── package.json
-│   └── tui/            # Interfaz de terminal (Go)
-│       ├── main.go     # Cliente TUI
-│       └── go.mod
-├── bin/                # Binarios compilados
-├── package.json        # Configuración del workspace
-└── README.md
-```
-
-## Instalación
-
-### Requisitos Previos
-
-- [Bun](https://bun.sh/) para el runtime de JavaScript/TypeScript
-- [Go](https://golang.org/) para la interfaz TUI
-- Token de API de [Groq](https://groq.com/)
-
-### Configuración
-
-1. Clona el repositorio:
 ```bash
-git clone <url-del-repositorio>
+curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/code-agent/main/install.sh | bash
+```
+
+### Option 2: npm Global Install
+
+```bash
+npm install -g code-agent-tutorial
+```
+
+### Option 3: Build from Source
+
+```bash
+git clone https://github.com/YOUR_USERNAME/code-agent.git
 cd code-agent
+bun install
+./scripts/build.sh
 ```
 
-2. Instala las dependencias:
+## Usage
+
+1. **Set your API key:**
+   ```bash
+   export GROQ_API_KEY="your_groq_api_key_here"
+   ```
+
+2. **Start the server:**
+   ```bash
+   code-agent server
+   ```
+
+3. **In another terminal, start the TUI client:**
+   ```bash
+   code-agent
+   ```
+
+## Configuration
+
+Environment variables:
+- `GROQ_API_KEY` - Your Groq API key (required)
+- `MODEL` - AI model to use (default: `llama-3.3-70b-versatile`)
+- `SERVER_URL` - Server URL (default: `http://localhost:3000`)
+
+## Available Commands
+
+- `help, h` - Show help message
+- `tokens, t` - Show token usage statistics
+- `history, hist` - Show conversation history
+- `clear, c` - Clear the screen
+- `reset, r` - Reset conversation history
+- `quit, q` - Exit the application
+
+## Development
+
+### Prerequisites
+
+- [Bun](https://bun.sh/) - JavaScript runtime and package manager
+- [Go](https://golang.org/) 1.21 or later
+- Groq API key
+
+### Setup
+
 ```bash
+git clone https://github.com/YOUR_USERNAME/code-agent.git
+cd code-agent
 bun install
 ```
 
-3. Compila el proyecto:
-```bash
-bun run build
-```
+### Development Mode
 
-## Uso
-
-### Servidor Web
-
-Inicia el servidor de desarrollo:
-
+Start the server:
 ```bash
 bun run dev
 ```
 
-El servidor estará disponible en `http://localhost:3000`
-
-### Endpoints de la API
-
-- `GET /health` - Verificación de estado del servidor
-- `POST /session` - Inicializar nueva sesión de conversación
-- `POST /message` - Enviar mensaje al agente
-- `GET /stream` - Obtener respuestas en streaming
-- `POST /tool` - Ejecutar herramienta específica
-- `GET /conversation` - Obtener historial de conversación
-- `GET /tools` - Listar herramientas disponibles
-- `GET /tokens` - Obtener uso de tokens
-- `DELETE /session` - Limpiar sesión actual
-
-### Interfaz TUI
-
-Ejecuta la interfaz de terminal:
-
+In another terminal, run the TUI:
 ```bash
-./bin/tui
+cd packages/tui
+go run main.go
 ```
 
-## Herramientas Disponibles
+### Building
 
-El agente incluye las siguientes herramientas del sistema:
-
-- **bash**: Ejecutar comandos de shell
-- **readFile**: Leer contenido de archivos
-- **writeFile**: Escribir contenido a archivos
-- **listFiles**: Listar archivos en directorios
-- **makeDir**: Crear nuevos directorios
-
-## Configuración
-
-Para usar el agente, necesitas configurar una sesión con tus credenciales de Groq:
-
-```json
-{
-  "groq": {
-    "token": "tu-token-de-groq",
-    "model": "llama-3.3-70b-versatile",
-    "baseURL": "https://api.groq.com/openai"
-  }
-}
+Build for all platforms:
+```bash
+./scripts/build.sh
 ```
 
-## Tecnologías Utilizadas
+## Architecture
 
-- **Backend**: TypeScript, Bun, Hono
-- **TUI**: Go
-- **IA**: Groq API con modelo Llama 3.3
-- **Validación**: Zod
-- **Arquitectura**: Monorepo con workspaces
+- **Server** (`packages/core`): TypeScript/Bun HTTP server with Hono framework
+- **Client** (`packages/tui`): Go-based terminal user interface
+- **Communication**: REST API with JSON payloads
 
-## Desarrollo
+## Installation Methods
 
-### Scripts Disponibles
+### 1. Shell Script Installation
+- Cross-platform installation script
+- Automatic platform detection
+- PATH configuration
+- Inspired by OpenCode's approach
 
-- `bun run dev` - Ejecutar servidor en modo desarrollo
-- `bun run build` - Compilar todo el proyecto
-- `bun run build:core` - Compilar solo el core
-- `bun run build:tui` - Compilar solo la TUI
+### 2. npm Global Package
+- Standard Node.js package manager
+- Universal launcher script
+- Works with existing Node.js workflows
 
-## Licencia
+### 3. GitHub Releases
+- Pre-built binaries for all platforms
+- Automated releases via GitHub Actions
+- Direct download and execution
 
-Este proyecto es un tutorial educativo para aprender sobre agentes de código con IA.
+## License
+
+MIT License - see LICENSE file for details.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## Troubleshooting
+
+### Server not running
+```bash
+# Check if server is running
+curl http://localhost:3000/health
+
+# Start server if needed
+code-agent server
+```
+
+### Permission denied
+```bash
+# Make sure scripts are executable
+chmod +x install.sh scripts/build.sh bin/code-agent
+```
+
+### Binary not found
+```bash
+# Build the project first
+./scripts/build.sh
+```
