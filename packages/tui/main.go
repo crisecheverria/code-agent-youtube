@@ -235,12 +235,12 @@ func main() {
 }
 
 func printUsage() {
-	fmt.Println("Code Agent - AI-powered coding assistant")
+	fmt.Println("Painika - AI-powered coding assistant")
 	fmt.Println()
 	fmt.Println("Usage:")
-	fmt.Println("  code-agent          Start the TUI client (default)")
-	fmt.Println("  code-agent server   Start the backend server")
-	fmt.Println("  code-agent --help   Show this help message")
+	fmt.Println("  painika          Start the TUI client (default)")
+	fmt.Println("  painika server   Start the backend server")
+	fmt.Println("  painika --help   Show this help message")
 	fmt.Println()
 	fmt.Println("Environment Variables:")
 	fmt.Println("  GROQ_API_KEY        Your Groq API key (required)")

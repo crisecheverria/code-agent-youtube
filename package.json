@@ -1,13 +1,13 @@
 {
-  "name": "code-agent-tutorial",
+  "name": "painika",
   "version": "0.1.0",
-  "description": "A basic AI code agent tutorial",
+  "description": "An AI-powered coding assistant with client-server architecture",
   "type": "module",
   "workspaces": [
     "packages/*"
   ],
   "bin": {
-    "code-agent": "./bin/code-agent"
+    "painika": "./bin/painika"
   },
   "scripts": {
     "dev": "bun run packages/core/src/index.ts",
@@ -16,9 +16,9 @@
     "build:tui": "cd packages/tui && go build -o ../../bin/tui ./main.go",
     "build:release": "bun run build:core && bun run build:release:all",
     "build:release:all": "bun run build:release:linux && bun run build:release:darwin && bun run build:release:windows",
-    "build:release:linux": "cd packages/tui && GOOS=linux GOARCH=amd64 go build -ldflags='-s -w' -o ../../bin/code-agent-linux-amd64 ./main.go && GOOS=linux GOARCH=arm64 go build -ldflags='-s -w' -o ../../bin/code-agent-linux-arm64 ./main.go",
-    "build:release:darwin": "cd packages/tui && GOOS=darwin GOARCH=amd64 go build -ldflags='-s -w' -o ../../bin/code-agent-darwin-amd64 ./main.go && GOOS=darwin GOARCH=arm64 go build -ldflags='-s -w' -o ../../bin/code-agent-darwin-arm64 ./main.go",
-    "build:release:windows": "cd packages/tui && GOOS=windows GOARCH=amd64 go build -ldflags='-s -w' -o ../../bin/code-agent-windows-amd64.exe ./main.go"
+    "build:release:linux": "cd packages/tui && GOOS=linux GOARCH=amd64 go build -ldflags='-s -w' -o ../../bin/painika-linux-amd64 ./main.go && GOOS=linux GOARCH=arm64 go build -ldflags='-s -w' -o ../../bin/painika-linux-arm64 ./main.go",
+    "build:release:darwin": "cd packages/tui && GOOS=darwin GOARCH=amd64 go build -ldflags='-s -w' -o ../../bin/painika-darwin-amd64 ./main.go && GOOS=darwin GOARCH=arm64 go build -ldflags='-s -w' -o ../../bin/painika-darwin-arm64 ./main.go",
+    "build:release:windows": "cd packages/tui && GOOS=windows GOARCH=amd64 go build -ldflags='-s -w' -o ../../bin/painika-windows-amd64.exe ./main.go"
   },
   "dependencies": {
     "hono": "^4.0.0",

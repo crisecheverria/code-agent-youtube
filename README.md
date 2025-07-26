@@ -1,4 +1,4 @@
-# Code Agent
+# Painika
 
 An AI-powered coding assistant with a client-server architecture built using TypeScript (Bun) for the server and Go for the TUI client.
 
@@ -16,20 +16,14 @@ An AI-powered coding assistant with a client-server architecture built using Typ
 ### Option 1: Install Script (Recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/code-agent/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/crisecheverria/painika/main/install.sh | bash
 ```
 
-### Option 2: npm Global Install
+### Option 2: Build from Source
 
 ```bash
-npm install -g code-agent-tutorial
-```
-
-### Option 3: Build from Source
-
-```bash
-git clone https://github.com/YOUR_USERNAME/code-agent.git
-cd code-agent
+git clone https://github.com/crisecheverria/painika.git
+cd painika
 bun install
 ./scripts/build.sh
 ```
@@ -37,23 +31,27 @@ bun install
 ## Usage
 
 1. **Set your API key:**
+
    ```bash
    export GROQ_API_KEY="your_groq_api_key_here"
    ```
 
 2. **Start the server:**
+
    ```bash
-   code-agent server
+   painika server
    ```
 
 3. **In another terminal, start the TUI client:**
+
    ```bash
-   code-agent
+   painika
    ```
 
 ## Configuration
 
 Environment variables:
+
 - `GROQ_API_KEY` - Your Groq API key (required)
 - `MODEL` - AI model to use (default: `llama-3.3-70b-versatile`)
 - `SERVER_URL` - Server URL (default: `http://localhost:3000`)
@@ -78,19 +76,21 @@ Environment variables:
 ### Setup
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/code-agent.git
-cd code-agent
+git clone https://github.com/crisecheverria/painika.git
+cd painika
 bun install
 ```
 
 ### Development Mode
 
 Start the server:
+
 ```bash
 bun run dev
 ```
 
 In another terminal, run the TUI:
+
 ```bash
 cd packages/tui
 go run main.go
@@ -99,6 +99,7 @@ go run main.go
 ### Building
 
 Build for all platforms:
+
 ```bash
 ./scripts/build.sh
 ```
@@ -112,17 +113,20 @@ Build for all platforms:
 ## Installation Methods
 
 ### 1. Shell Script Installation
+
 - Cross-platform installation script
 - Automatic platform detection
 - PATH configuration
 - Inspired by OpenCode's approach
 
 ### 2. npm Global Package
+
 - Standard Node.js package manager
 - Universal launcher script
 - Works with existing Node.js workflows
 
 ### 3. GitHub Releases
+
 - Pre-built binaries for all platforms
 - Automated releases via GitHub Actions
 - Direct download and execution
@@ -142,22 +146,26 @@ MIT License - see LICENSE file for details.
 ## Troubleshooting
 
 ### Server not running
+
 ```bash
 # Check if server is running
 curl http://localhost:3000/health
 
 # Start server if needed
-code-agent server
+painika server
 ```
 
 ### Permission denied
+
 ```bash
 # Make sure scripts are executable
-chmod +x install.sh scripts/build.sh bin/code-agent
+chmod +x install.sh scripts/build.sh bin/painika
 ```
 
 ### Binary not found
+
 ```bash
 # Build the project first
 ./scripts/build.sh
 ```
+

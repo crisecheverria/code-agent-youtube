@@ -5,9 +5,9 @@ set -euo pipefail
 # Based on OpenCode's approach
 
 # Configuration
-REPO="crisecheverria/code-agent-youtube" # Update with your GitHub repo
-INSTALL_DIR="$HOME/.code-agent/bin"
-BINARY_NAME="code-agent"
+REPO="crisecheverria/painika"
+INSTALL_DIR="$HOME/.painika/bin"
+BINARY_NAME="painika"
 
 # Colors for output
 RED='\033[0;31m'
@@ -95,7 +95,7 @@ install_binary() {
     exit 1
   fi
 
-  log_info "Installing Code Agent ${version} for ${platform}"
+  log_info "Installing Painika ${version} for ${platform}"
 
   # Create install directory
   mkdir -p "$INSTALL_DIR"
@@ -179,7 +179,7 @@ add_to_path() {
 
 # Main installation function
 main() {
-  log_info "Starting Code Agent installation..."
+  log_info "Starting Painika installation..."
 
   local platform
   platform=$(detect_platform)
@@ -193,7 +193,7 @@ main() {
   add_to_path
 
   log_success "Installation complete!"
-  log_info "Run 'code-agent --help' to get started"
+  log_info "Run 'painika --help' to get started"
   log_info "You may need to restart your shell for PATH changes to take effect"
 }
 
