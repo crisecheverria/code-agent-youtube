@@ -50,11 +50,34 @@ bun install
 
 ## Configuration
 
-Environment variables:
+### Environment Variables
 
 - `GROQ_API_KEY` - Your Groq API key (required)
 - `MODEL` - AI model to use (default: `llama-3.3-70b-versatile`)
 - `SERVER_URL` - Server URL (default: `http://localhost:3000`)
+
+### .env File Support
+
+You can create a `.env` file to avoid setting environment variables manually. Painika will automatically load it from:
+
+1. **Project root** (recommended): `/.env`
+2. **TUI directory**: `/packages/tui/.env`
+
+**Example .env file:**
+```bash
+GROQ_API_KEY=your_groq_api_key_here
+MODEL=llama-3.1-8b-instant
+SERVER_URL=http://localhost:3000
+```
+
+**Available Groq Models:**
+- `llama-3.3-70b-versatile` (default)
+- `llama-3.1-8b-instant`
+- `llama-3.1-70b-versatile`
+- `mixtral-8x7b-32768`
+- `gemma2-9b-it`
+
+Get your API key from: [Groq Console](https://console.groq.com/keys)
 
 ## Available Commands
 

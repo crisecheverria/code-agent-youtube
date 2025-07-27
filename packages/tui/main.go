@@ -13,6 +13,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 // Configuration structure
@@ -218,6 +220,16 @@ func getEnv(key, defaultValue string) string {
 }
 
 func main() {
+	// Load .env file if it exists
+	// Try loading from current directory first, then from packages/tui/
+	if err := godotenv.Load(); err != nil {
+		// Try loading from packages/tui directory
+		if err2 := godotenv.Load("packages/tui/.env"); err2 != nil {
+			// .env file not found in either location - continue with environment variables
+			log.Printf("No .env file found or error loading it: %v", err)
+		}
+	}
+
 	// Check if running as server
 	if len(os.Args) > 1 && os.Args[1] == "server" {
 		startServer()
