@@ -8,21 +8,10 @@ function zodToJsonSchema(schema: z.ZodTypeAny): any {
     const required: string[] = [];
 
     for (const [key, value] of Object.entries(shape)) {
-      if (value instanceof z.ZodString) {
-        properties[key] = { type: "string" };
-        if (!value.isOptional()) {
-          required.push(key);
-        }
-      } else if (value instanceof z.ZodOptional) {
-        const inner = value.unwrap();
-        if (inner instanceof z.ZodString) {
-          properties[key] = { type: "string" };
-        }
-      } else if (value instanceof z.ZodDefault) {
-        const inner = value.removeDefault();
-        if (inner instanceof z.ZodString) {
-          properties[key] = { type: "string" };
-        }
+      const { jsonSchema, isRequired } = convertZodType(value as z.ZodTypeAny);
+      properties[key] = jsonSchema;
+      if (isRequired) {
+        required.push(key);
       }
     }
     return {
@@ -31,7 +20,44 @@ function zodToJsonSchema(schema: z.ZodTypeAny): any {
       required,
     };
   }
-  return { type: "object" };
+  return convertZodType(schema).jsonSchema;
+}
+
+function convertZodType(schema: z.ZodTypeAny): { jsonSchema: any; isRequired: boolean } {
+  if (schema instanceof z.ZodString) {
+    return { jsonSchema: { type: "string" }, isRequired: true };
+  } else if (schema instanceof z.ZodNumber) {
+    return { jsonSchema: { type: "number" }, isRequired: true };
+  } else if (schema instanceof z.ZodBoolean) {
+    return { jsonSchema: { type: "boolean" }, isRequired: true };
+  } else if (schema instanceof z.ZodArray) {
+    const itemSchema = convertZodType(schema.element);
+    return {
+      jsonSchema: {
+        type: "array",
+        items: itemSchema.jsonSchema,
+      },
+      isRequired: true,
+    };
+  } else if (schema instanceof z.ZodOptional) {
+    const inner = convertZodType(schema.unwrap());
+    return { jsonSchema: inner.jsonSchema, isRequired: false };
+  } else if (schema instanceof z.ZodDefault) {
+    const inner = convertZodType(schema.removeDefault());
+    const defaultValue = schema._def.defaultValue();
+    return { 
+      jsonSchema: { 
+        ...inner.jsonSchema, 
+        default: defaultValue 
+      }, 
+      isRequired: false 
+    };
+  } else if (schema instanceof z.ZodObject) {
+    return { jsonSchema: zodToJsonSchema(schema), isRequired: true };
+  }
+  
+  // Fallback for unknown types
+  return { jsonSchema: { type: "string" }, isRequired: true };
 }
 
 export const ToolState = z.enum(["pending", "running", "completed", "error"]);
