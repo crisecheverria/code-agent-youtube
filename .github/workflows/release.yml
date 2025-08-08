@@ -41,15 +41,15 @@ jobs:
           cd packages/tui
           
           # Linux builds
-          GOOS=linux GOARCH=amd64 go build -ldflags='-s -w' -o ../../bin/code-agent-linux-amd64 ./main.go
-          GOOS=linux GOARCH=arm64 go build -ldflags='-s -w' -o ../../bin/code-agent-linux-arm64 ./main.go
+          GOOS=linux GOARCH=amd64 go build -ldflags='-s -w' -o ../../bin/painika-linux-amd64 ./main.go
+          GOOS=linux GOARCH=arm64 go build -ldflags='-s -w' -o ../../bin/painika-linux-arm64 ./main.go
           
           # macOS builds
-          GOOS=darwin GOARCH=amd64 go build -ldflags='-s -w' -o ../../bin/code-agent-darwin-amd64 ./main.go
-          GOOS=darwin GOARCH=arm64 go build -ldflags='-s -w' -o ../../bin/code-agent-darwin-arm64 ./main.go
+          GOOS=darwin GOARCH=amd64 go build -ldflags='-s -w' -o ../../bin/painika-darwin-amd64 ./main.go
+          GOOS=darwin GOARCH=arm64 go build -ldflags='-s -w' -o ../../bin/painika-darwin-arm64 ./main.go
           
           # Windows builds
-          GOOS=windows GOARCH=amd64 go build -ldflags='-s -w' -o ../../bin/code-agent-windows-amd64.exe ./main.go
+          GOOS=windows GOARCH=amd64 go build -ldflags='-s -w' -o ../../bin/painika-windows-amd64.exe ./main.go
           
           cd ../..
 
@@ -70,8 +70,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bin/code-agent-linux-amd64
-          asset_name: code-agent-linux-amd64
+          asset_path: ./bin/painika-linux-amd64
+          asset_name: painika-linux-amd64
           asset_content_type: application/octet-stream
 
       - name: Upload Linux ARM64
@@ -80,8 +80,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bin/code-agent-linux-arm64
-          asset_name: code-agent-linux-arm64
+          asset_path: ./bin/painika-linux-arm64
+          asset_name: painika-linux-arm64
           asset_content_type: application/octet-stream
 
       - name: Upload macOS AMD64
@@ -90,8 +90,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bin/code-agent-darwin-amd64
-          asset_name: code-agent-darwin-amd64
+          asset_path: ./bin/painika-darwin-amd64
+          asset_name: painika-darwin-amd64
           asset_content_type: application/octet-stream
 
       - name: Upload macOS ARM64
@@ -100,8 +100,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bin/code-agent-darwin-arm64
-          asset_name: code-agent-darwin-arm64
+          asset_path: ./bin/painika-darwin-arm64
+          asset_name: painika-darwin-arm64
           asset_content_type: application/octet-stream
 
       - name: Upload Windows AMD64
@@ -110,6 +110,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bin/code-agent-windows-amd64.exe
-          asset_name: code-agent-windows-amd64.exe
+          asset_path: ./bin/painika-windows-amd64.exe
+          asset_name: painika-windows-amd64.exe
           asset_content_type: application/octet-stream
