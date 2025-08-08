@@ -3,19 +3,29 @@ package main
 import (
 	"bufio"
 	"bytes"
+	_ "embed"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/joho/godotenv"
 )
+
+//go:embed server.js
+var serverBundle string
+
+// Global server process for cleanup
+var globalServerCmd *exec.Cmd
 
 // Configuration structure
 type Config struct {
@@ -210,11 +220,86 @@ func (c *Client) ClearConversation() error {
 	return nil
 }
 
-// Get environment variables for configuration
+// Get environment variables for configuration, checking shell config files
 func getEnv(key, defaultValue string) string {
+	// First check system environment
 	value := os.Getenv(key)
-	if value == "" {
-		return defaultValue
+	if value != "" {
+		return value
+	}
+
+	// If not found, try to read from shell config files
+	value = getEnvFromShellConfig(key)
+	if value != "" {
+		return value
+	}
+
+	return defaultValue
+}
+
+// Read environment variable from shell configuration files
+func getEnvFromShellConfig(key string) string {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+
+	// Common shell config files to check
+	configFiles := []string{
+		filepath.Join(homeDir, ".zshrc"),
+		filepath.Join(homeDir, ".bashrc"),
+		filepath.Join(homeDir, ".bash_profile"),
+		filepath.Join(homeDir, ".profile"),
+	}
+
+	for _, configFile := range configFiles {
+		if value := extractEnvFromFile(configFile, key); value != "" {
+			return value
+		}
+	}
+
+	return ""
+}
+
+// Extract environment variable from a config file
+func extractEnvFromFile(filename, key string) string {
+	file, err := os.Open(filename)
+	if err != nil {
+		return ""
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		
+		// Skip comments
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		// Look for export statements
+		if strings.HasPrefix(line, "export "+key+"=") {
+			value := strings.TrimPrefix(line, "export "+key+"=")
+			return cleanEnvValue(value)
+		}
+
+		// Look for direct assignments
+		if strings.HasPrefix(line, key+"=") {
+			value := strings.TrimPrefix(line, key+"=")
+			return cleanEnvValue(value)
+		}
+	}
+
+	return ""
+}
+
+// Clean environment variable value (remove quotes, etc.)
+func cleanEnvValue(value string) string {
+	// Remove surrounding quotes
+	if (strings.HasPrefix(value, "\"") && strings.HasSuffix(value, "\"")) ||
+		(strings.HasPrefix(value, "'") && strings.HasSuffix(value, "'")) {
+		return value[1 : len(value)-1]
 	}
 	return value
 }
@@ -264,38 +349,28 @@ func printUsage() {
 func startServer() {
 	fmt.Println("🚀 Starting Code Agent server...")
 
-	// Get the directory where the binary is located
-	execPath, err := os.Executable()
+	// Create a temporary file for the server bundle
+	tempFile, err := ioutil.TempFile("", "server-*.js")
 	if err != nil {
-		log.Fatalf("❌ Failed to get executable path: %v", err)
+		log.Fatalf("❌ Failed to create temporary file: %v", err)
 	}
+	tempFileName := tempFile.Name()
 
-	// Determine the server bundle path
-	baseDir := filepath.Dir(execPath)
-	var serverPath string
-
-	// Look for the server bundle in common locations
-	possiblePaths := []string{
-		filepath.Join(baseDir, "packages", "core", "dist", "index.js"),
-		filepath.Join(baseDir, "..", "packages", "core", "dist", "index.js"),
-		filepath.Join(baseDir, "dist", "index.js"),
+	// Write the embedded server bundle to the temporary file
+	if _, err := tempFile.WriteString(serverBundle); err != nil {
+		tempFile.Close()
+		os.Remove(tempFileName)
+		log.Fatalf("❌ Failed to write server bundle: %v", err)
 	}
+	tempFile.Close()
 
-	for _, path := range possiblePaths {
-		if _, err := os.Stat(path); err == nil {
-			serverPath = path
-			break
-		}
-	}
+	// Clean up temp file when server exits
+	defer os.Remove(tempFileName)
 
-	if serverPath == "" {
-		log.Fatalf("❌ Server bundle not found. Please run 'bun run build' first.")
-	}
-
-	fmt.Printf("📦 Server bundle: %s\n", serverPath)
+	fmt.Printf("📦 Server bundle extracted to: %s\n", tempFileName)
 
 	// Start the Bun server
-	cmd := exec.Command("bun", "run", serverPath)
+	cmd := exec.Command("bun", "run", tempFileName)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Env = os.Environ()
@@ -329,15 +404,49 @@ func runTUI() {
 		os.Exit(1)
 	}
 
+	// Set up signal handling for cleanup
+	setupCleanupHandlers()
+
 	// Create client
 	client := NewClient(config)
 
-	// Check if server is running, if not suggest starting it
+	// Check if server is running, if not start it automatically
 	if !isServerRunning(config.ServerURL) {
-		fmt.Println("⚠️  Server is not running at", config.ServerURL)
-		fmt.Println("💡 Start the server with: code-agent server")
-		fmt.Println()
-		os.Exit(1)
+		fmt.Println("🔄 Server not running, starting automatically...")
+		
+		// Start server in background and get the actual port
+		actualPort, serverCmd, err := startServerInBackgroundWithPort()
+		if err != nil {
+			fmt.Printf("❌ Failed to start server: %v\n", err)
+			fmt.Println("💡 Try starting the server manually with: painika server")
+			os.Exit(1)
+		}
+
+		// Store server process globally for cleanup
+		globalServerCmd = serverCmd
+
+		// Update config to use actual server port
+		config.ServerURL = fmt.Sprintf("http://localhost:%d", actualPort)
+
+		// Wait for server to be ready
+		fmt.Print("⏳ Waiting for server to start")
+		for i := 0; i < 30; i++ { // Wait up to 15 seconds
+			if isServerRunning(config.ServerURL) {
+				fmt.Println(" ✅")
+				break
+			}
+			fmt.Print(".")
+			time.Sleep(500 * time.Millisecond)
+			
+			if i == 29 {
+				fmt.Println(" ❌")
+				fmt.Println("❌ Server failed to start within 15 seconds")
+				if serverCmd != nil && serverCmd.Process != nil {
+					serverCmd.Process.Kill()
+				}
+				os.Exit(1)
+			}
+		}
 	}
 
 	// Initialize session
@@ -375,6 +484,7 @@ func runTUI() {
 		switch strings.ToLower(input) {
 		case "quit", "exit", "q":
 			fmt.Println("👋 Goodbye!")
+			cleanupAndExit()
 			return
 		case "help", "h":
 			printHelp()
@@ -393,6 +503,120 @@ func runTUI() {
 	}
 }
 
+func startServerInBackground() (*exec.Cmd, error) {
+	// Create a temporary file for the server bundle
+	tempFile, err := ioutil.TempFile("", "server-*.js")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temporary file: %v", err)
+	}
+	tempFileName := tempFile.Name()
+
+	// Write the embedded server bundle to the temporary file
+	if _, err := tempFile.WriteString(serverBundle); err != nil {
+		tempFile.Close()
+		os.Remove(tempFileName)
+		return nil, fmt.Errorf("failed to write server bundle: %v", err)
+	}
+	tempFile.Close()
+
+	// Start the Bun server in background
+	cmd := exec.Command("bun", "run", tempFileName)
+	cmd.Env = os.Environ()
+
+	// Start the process without waiting
+	if err := cmd.Start(); err != nil {
+		os.Remove(tempFileName)
+		return nil, fmt.Errorf("failed to start server: %v", err)
+	}
+
+	// Clean up temp file when process exits (in a goroutine)
+	go func() {
+		cmd.Wait() // Wait for process to finish
+		os.Remove(tempFileName)
+	}()
+
+	return cmd, nil
+}
+
+func startServerInBackgroundWithPort() (int, *exec.Cmd, error) {
+	// Create a temporary file for the server bundle
+	tempFile, err := ioutil.TempFile("", "server-*.js")
+	if err != nil {
+		return 0, nil, fmt.Errorf("failed to create temporary file: %v", err)
+	}
+	tempFileName := tempFile.Name()
+
+	// Write the embedded server bundle to the temporary file
+	if _, err := tempFile.WriteString(serverBundle); err != nil {
+		tempFile.Close()
+		os.Remove(tempFileName)
+		return 0, nil, fmt.Errorf("failed to write server bundle: %v", err)
+	}
+	tempFile.Close()
+
+	// Start the Bun server in background and capture output
+	cmd := exec.Command("bun", "run", tempFileName)
+	cmd.Env = os.Environ()
+	
+	// Capture stdout to parse the port
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		os.Remove(tempFileName)
+		return 0, nil, fmt.Errorf("failed to create stdout pipe: %v", err)
+	}
+
+	// Start the process
+	if err := cmd.Start(); err != nil {
+		os.Remove(tempFileName)
+		return 0, nil, fmt.Errorf("failed to start server: %v", err)
+	}
+
+	// Read server output to get the actual port
+	portChan := make(chan int, 1)
+	errorChan := make(chan error, 1)
+	
+	go func() {
+		defer stdout.Close()
+		scanner := bufio.NewScanner(stdout)
+		for scanner.Scan() {
+			line := scanner.Text()
+			// Look for line like "🚀 Code Agent server starting on port 3001"
+			if strings.Contains(line, "server starting on port") {
+				parts := strings.Split(line, "port ")
+				if len(parts) >= 2 {
+					portStr := strings.TrimSpace(parts[1])
+					if port, err := fmt.Sscanf(portStr, "%d", new(int)); err == nil && port == 1 {
+						var actualPort int
+						fmt.Sscanf(portStr, "%d", &actualPort)
+						portChan <- actualPort
+						return
+					}
+				}
+			}
+		}
+		errorChan <- fmt.Errorf("could not parse server port from output")
+	}()
+
+	// Wait for port or timeout
+	select {
+	case port := <-portChan:
+		// Clean up temp file when process exits (in a goroutine)
+		go func() {
+			cmd.Wait() // Wait for process to finish
+			os.Remove(tempFileName)
+		}()
+		return port, cmd, nil
+	case err := <-errorChan:
+		cmd.Process.Kill()
+		os.Remove(tempFileName)
+		return 0, nil, err
+	case <-time.After(10 * time.Second):
+		cmd.Process.Kill()
+		os.Remove(tempFileName)
+		return 0, nil, fmt.Errorf("timeout waiting for server to start")
+	}
+}
+
 func isServerRunning(serverURL string) bool {
 	client := &http.Client{Timeout: 2 * time.Second}
 	resp, err := client.Get(serverURL + "/health")
@@ -401,6 +625,29 @@ func isServerRunning(serverURL string) bool {
 	}
 	defer resp.Body.Close()
 	return resp.StatusCode == 200
+}
+
+// Setup signal handlers for graceful cleanup
+func setupCleanupHandlers() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	
+	go func() {
+		<-c
+		fmt.Println("\n🛑 Received interrupt signal, cleaning up...")
+		cleanupAndExit()
+	}()
+}
+
+// Cleanup server and exit
+func cleanupAndExit() {
+	if globalServerCmd != nil && globalServerCmd.Process != nil {
+		fmt.Println("🧹 Stopping server...")
+		globalServerCmd.Process.Kill()
+		globalServerCmd.Wait() // Wait for process to finish
+		fmt.Println("✅ Server stopped")
+	}
+	os.Exit(0)
 }
 
 // Handle regular chat message

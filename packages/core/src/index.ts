@@ -173,7 +173,37 @@ app.delete("/session", async (c) => {
 	return c.json({ success: true });
 });
 
-const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
+// Find an available port starting from 3000
+async function findAvailablePort(startPort: number = 3000): Promise<number> {
+	return new Promise((resolve, reject) => {
+		const net = require('net');
+		let port = startPort;
+		
+		function tryPort(portToTry: number) {
+			const server = net.createServer();
+			
+			server.listen(portToTry, () => {
+				server.once('close', () => {
+					resolve(portToTry);
+				});
+				server.close();
+			});
+			
+			server.on('error', () => {
+				if (portToTry < startPort + 100) { // Try up to 100 ports
+					tryPort(portToTry + 1);
+				} else {
+					reject(new Error('No available ports found'));
+				}
+			});
+		}
+		
+		tryPort(port);
+	});
+}
+
+const specifiedPort = process.env.PORT ? parseInt(process.env.PORT) : null;
+const port = specifiedPort || await findAvailablePort(3000);
 
 console.log(`🚀 Code Agent server starting on port ${port}`);
 

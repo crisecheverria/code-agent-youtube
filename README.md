@@ -1,92 +1,113 @@
 # Painika
 
-An AI-powered coding assistant with a client-server architecture built using TypeScript (Bun) for the server and Go for the TUI client.
+An AI-powered coding assistant that automatically manages its client-server architecture. Just run `painika` and everything works!
 
-## Features
+## ✨ Features
 
-- 🤖 AI-powered coding assistance using Groq API
-- 🔧 Built-in tools for file operations and shell commands
-- 💬 Interactive TUI with conversation history
-- 📊 Token usage tracking
-- 🚀 Cross-platform support (Linux, macOS, Windows)
-- 📦 Multiple installation methods (shell script, npm, direct download)
+- 🤖 **AI-powered coding assistance** using Groq API
+- 🔧 **Built-in tools** for file operations and shell commands  
+- 💬 **Interactive TUI** with conversation history
+- 📊 **Token usage tracking** and cost estimation
+- 🚀 **Cross-platform support** (Linux, macOS, Windows)
+- ⚡ **Auto server management** - no manual setup needed
+- 🔄 **Smart port detection** - works even if port 3000 is busy
+- 🧹 **Automatic cleanup** - server stops when you quit
+- 📂 **Shell config integration** - reads API keys from .zshrc/.bashrc
 
-## Quick Start
+## 🚀 Quick Start
 
-### Option 1: Install Script (Recommended)
-
+### Install Painika
 ```bash
 curl -fsSL https://raw.githubusercontent.com/crisecheverria/painika/main/install.sh | bash
 ```
 
-### Option 2: Build from Source
+### Setup API Key
+Add your Groq API key to your shell config:
 
+```bash
+# Add to ~/.zshrc (or ~/.bashrc)
+echo 'export GROQ_API_KEY="your_groq_api_key_here"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+Get your free API key at: [console.groq.com/keys](https://console.groq.com/keys)
+
+### Start Coding!
+```bash
+painika
+```
+
+That's it! Painika will:
+- ✅ Automatically start the server if needed
+- ✅ Find an available port (3000, 3001, 3002...)  
+- ✅ Connect you to your AI coding assistant
+- ✅ Clean up everything when you quit
+
+### Alternative: Build from Source
 ```bash
 git clone https://github.com/crisecheverria/painika.git
 cd painika
 bun install
-./scripts/build.sh
+bun run build
 ```
 
-## Usage
+## ⚙️ Configuration
 
-1. **Set your API key:**
+Painika automatically detects configuration from multiple sources:
 
-   ```bash
-   export GROQ_API_KEY="your_groq_api_key_here"
-   ```
+### API Key Sources (in priority order):
+1. **Environment variable**: `export GROQ_API_KEY="..."`  
+2. **Shell config files**: `~/.zshrc`, `~/.bashrc`, `~/.bash_profile`, `~/.profile`
+3. **Local .env file**: `.env` in current directory
 
-2. **Start the server:**
-
-   ```bash
-   painika server
-   ```
-
-3. **In another terminal, start the TUI client:**
-
-   ```bash
-   painika
-   ```
-
-## Configuration
-
-### Environment Variables
-
-- `GROQ_API_KEY` - Your Groq API key (required)
-- `MODEL` - AI model to use (default: `llama-3.3-70b-versatile`)
-- `SERVER_URL` - Server URL (default: `http://localhost:3000`)
-
-### .env File Support
-
-You can create a `.env` file to avoid setting environment variables manually. Painika will automatically load it from:
-
-1. **Project root** (recommended): `/.env`
-2. **TUI directory**: `/packages/tui/.env`
-
-**Example .env file:**
+### Optional Settings
 ```bash
-GROQ_API_KEY=your_groq_api_key_here
-MODEL=llama-3.1-8b-instant
-SERVER_URL=http://localhost:3000
+# AI model to use (default: llama-3.3-70b-versatile)
+export MODEL="llama-3.1-8b-instant"
+
+# Custom server URL (auto-detected by default)
+export SERVER_URL="http://localhost:3000"  
 ```
 
-**Available Groq Models:**
-- `llama-3.3-70b-versatile` (default)
-- `llama-3.1-8b-instant`
+### Available Groq Models
+- `llama-3.3-70b-versatile` (default - smartest)
+- `llama-3.1-8b-instant` (fastest) 
 - `llama-3.1-70b-versatile`
 - `mixtral-8x7b-32768`
 - `gemma2-9b-it`
 
-Get your API key from: [Groq Console](https://console.groq.com/keys)
+💡 **Pro tip**: Add your API key to `~/.zshrc` once and forget about it!
 
-## Available Commands
+## 💬 Commands
 
-- `help, h` - Show help message
-- `tokens, t` - Show token usage statistics
-- `history, hist` - Show conversation history
-- `clear, c` - Clear the screen
-- `reset, r` - Reset conversation history
-- `quit, q` - Exit the application
+Once inside Painika, you can use these commands:
+
+| Command | Description |
+|---------|-------------|
+| `help`, `h` | Show help message |
+| `tokens`, `t` | Show token usage & cost estimate |
+| `history`, `hist` | Show conversation history |
+| `clear`, `c` | Clear the screen |
+| `reset`, `r` | Reset conversation history |
+| `quit`, `q` | Exit (automatically stops server) |
+
+### Example Session
+```bash
+💬 > help me optimize this Python function
+🤖 I'd be happy to help optimize your Python function! Could you share the code?
+
+💬 > tokens
+📊 Token Usage Statistics:
+   Input tokens:  150
+   Output tokens: 45
+   Total tokens:  195
+   Estimated cost: $0.0001
+
+💬 > quit
+👋 Goodbye!
+🧹 Stopping server...
+✅ Server stopped
+```
 
 ## Development
 
@@ -127,32 +148,43 @@ Build for all platforms:
 ./scripts/build.sh
 ```
 
-## Architecture
+## 🏗️ Architecture
 
-- **Server** (`packages/core`): TypeScript/Bun HTTP server with Hono framework
-- **Client** (`packages/tui`): Go-based terminal user interface
-- **Communication**: REST API with JSON payloads
+Painika uses a smart client-server architecture:
 
-## Installation Methods
+- **Single Binary**: Contains both client and embedded server
+- **Go Client**: Terminal interface with automatic server management  
+- **Embedded TypeScript Server**: Bun-powered API server bundled inside the binary
+- **Auto-Discovery**: Client detects server port and manages lifecycle
+- **Zero Config**: Works out of the box with sensible defaults
 
-### 1. Shell Script Installation
+### How It Works
+1. Run `painika` → Client checks if server is running
+2. If not → Client extracts and starts embedded server 
+3. Server finds available port (3000, 3001, 3002...)
+4. Client connects to server's actual port
+5. You chat with AI → Server handles Groq API calls
+6. Type `quit` → Client stops server and cleans up
 
-- Cross-platform installation script
-- Automatic platform detection
-- PATH configuration
-- Inspired by OpenCode's approach
+## 📦 Installation Options
 
-### 2. npm Global Package
+### 🎯 Recommended: Install Script
+```bash
+curl -fsSL https://raw.githubusercontent.com/crisecheverria/painika/main/install.sh | bash
+```
+- ✅ Cross-platform (Linux, macOS, Windows)
+- ✅ Auto-detects architecture (x64, arm64)  
+- ✅ Sets up PATH automatically
+- ✅ Single self-contained binary
 
-- Standard Node.js package manager
-- Universal launcher script
-- Works with existing Node.js workflows
+### 🔧 Alternative: GitHub Releases
+Download pre-built binaries from [GitHub Releases](https://github.com/crisecheverria/painika/releases)
 
-### 3. GitHub Releases
-
-- Pre-built binaries for all platforms
-- Automated releases via GitHub Actions
-- Direct download and execution
+### 🛠️ Developer: Build from Source
+```bash  
+git clone https://github.com/crisecheverria/painika.git
+cd painika && bun install && bun run build
+```
 
 ## License
 
@@ -166,29 +198,36 @@ MIT License - see LICENSE file for details.
 4. Add tests if applicable
 5. Submit a pull request
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
-### Server not running
-
+### "GROQ_API_KEY environment variable is required"
 ```bash
-# Check if server is running
-curl http://localhost:3000/health
+# Add API key to your shell config
+echo 'export GROQ_API_KEY="your_key_here"' >> ~/.zshrc
+source ~/.zshrc
+```
 
-# Start server if needed
+### "Server failed to start"
+- **Port conflict**: Painika automatically finds available ports (3000-3100)
+- **Missing dependencies**: Make sure `bun` is installed for server functionality
+- **Permissions**: Run `chmod +x ~/.painika/bin/painika` if needed
+
+### Manual Server Management
+```bash
+# Start server only (if needed)
 painika server
+
+# Check server health
+curl http://localhost:3000/health  # or whatever port is shown
 ```
 
-### Permission denied
-
+### Reset Everything
 ```bash
-# Make sure scripts are executable
-chmod +x install.sh scripts/build.sh bin/painika
-```
+# Kill any stuck processes
+pkill -f painika
+pkill -f "bun run"
 
-### Binary not found
-
-```bash
-# Build the project first
-./scripts/build.sh
+# Restart fresh
+painika
 ```
 
