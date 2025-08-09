@@ -1,6 +1,6 @@
 # Painika
 
-An AI-powered coding assistant that automatically manages its client-server architecture. Just run `painika` and everything works!
+An AI-powered coding assistant that automatically manages its client-server architecture.
 
 ## ✨ Features
 
@@ -14,11 +14,14 @@ An AI-powered coding assistant that automatically manages its client-server arch
 - 🧹 **Automatic cleanup** - server stops when you quit
 - 📂 **Shell config integration** - reads API keys from .zshrc/.bashrc
 
-## 🚀 Quick Start
+## 🚀 Getting Started
 
-### Install Painika
+### Clone and Build
 ```bash
-curl -fsSL https://raw.githubusercontent.com/crisecheverria/painika/main/install.sh | bash
+git clone https://github.com/crisecheverria/painika.git
+cd painika
+bun install
+bun run build
 ```
 
 ### Setup API Key
@@ -31,25 +34,6 @@ source ~/.zshrc
 ```
 
 Get your free API key at: [console.groq.com/keys](https://console.groq.com/keys)
-
-### Start Coding!
-```bash
-painika
-```
-
-That's it! Painika will:
-- ✅ Automatically start the server if needed
-- ✅ Find an available port (3000, 3001, 3002...)  
-- ✅ Connect you to your AI coding assistant
-- ✅ Clean up everything when you quit
-
-### Alternative: Build from Source
-```bash
-git clone https://github.com/crisecheverria/painika.git
-cd painika
-bun install
-bun run build
-```
 
 ## ⚙️ Configuration
 
@@ -166,25 +150,6 @@ Painika uses a smart client-server architecture:
 5. You chat with AI → Server handles Groq API calls
 6. Type `quit` → Client stops server and cleans up
 
-## 📦 Installation Options
-
-### 🎯 Recommended: Install Script
-```bash
-curl -fsSL https://raw.githubusercontent.com/crisecheverria/painika/main/install.sh | bash
-```
-- ✅ Cross-platform (Linux, macOS, Windows)
-- ✅ Auto-detects architecture (x64, arm64)  
-- ✅ Sets up PATH automatically
-- ✅ Single self-contained binary
-
-### 🔧 Alternative: GitHub Releases
-Download pre-built binaries from [GitHub Releases](https://github.com/crisecheverria/painika/releases)
-
-### 🛠️ Developer: Build from Source
-```bash  
-git clone https://github.com/crisecheverria/painika.git
-cd painika && bun install && bun run build
-```
 
 ## License
 
